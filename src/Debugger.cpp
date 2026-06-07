@@ -100,6 +100,14 @@ constexpr quint64 run_to_cursor_tag = Q_UINT64_C(0x474f544f48455245); // "GOTOHE
 constexpr quint64 ld_loader_tag = Q_UINT64_C(0x4c49424556454e54); // "LIBEVENT" in hex
 #endif
 
+void configure_pointer_highlighting(const std::shared_ptr<QHexView> &view) {
+	view->setPointerSize(static_cast<int>(edb::v1::pointer_size()));
+	view->setPointerValidityTester([](QHexView::address_t address) {
+		const std::shared_ptr<IRegion> region = edb::v1::memory_regions().findRegion(address);
+		return region && region->accessible();
+	});
+}
+
 template <class Addr>
 void handle_library_event(IProcess *process, edb::address_t debug_pointer) {
 #ifdef Q_OS_LINUX
@@ -413,10 +421,11 @@ Debugger::Debugger(QWidget *parent)
 #endif
 
 	// Data Dump Shortcuts
-	dumpFollowInCPUAction_   = createAction(tr("Follow Address In &CPU"), QKeySequence(), &Debugger::mnuDumpFollowInCPU);
-	dumpFollowInDumpAction_  = createAction(tr("Follow Address In &Dump"), QKeySequence(), &Debugger::mnuDumpFollowInDump);
-	dumpFollowInStackAction_ = createAction(tr("Follow Address In &Stack"), QKeySequence(), &Debugger::mnuDumpFollowInStack);
-	dumpSaveToFileAction_    = createAction(tr("&Save To File"), QKeySequence(), &Debugger::mnuDumpSaveToFile);
+	dumpFollowInCPUAction_     = createAction(tr("Follow Address In &CPU"), QKeySequence(), &Debugger::mnuDumpFollowInCPU);
+	dumpFollowInDumpAction_    = createAction(tr("Follow Address In &Dump"), QKeySequence(), &Debugger::mnuDumpFollowInDump);
+	dumpFollowInDumpTabAction_ = createAction(tr("&Follow In Dump (New Tab)"), QKeySequence(), &Debugger::mnuDumpFollowInDumpNewTab);
+	dumpFollowInStackAction_   = createAction(tr("Follow Address In &Stack"), QKeySequence(), &Debugger::mnuDumpFollowInStack);
+	dumpSaveToFileAction_      = createAction(tr("&Save To File"), QKeySequence(), &Debugger::mnuDumpSaveToFile);
 
 	// Register View Shortcuts
 	registerFollowInDumpAction_    = createAction(tr("&Follow In Dump"), QKeySequence(), &Debugger::mnuRegisterFollowInDump);
@@ -780,6 +789,7 @@ void Debugger::createDataTab() {
 	auto new_data_view = std::make_shared<DataViewInfo>((current != -1) ? dataRegions_[current]->region : nullptr);
 
 	auto hexview = std::make_shared<QHexView>();
+	configure_pointer_highlighting(hexview);
 
 	Theme theme = Theme::load();
 
@@ -1085,6 +1095,7 @@ void Debugger::setupUi() {
 void Debugger::setupStackView() {
 
 	stackView_ = std::make_shared<QHexView>();
+	configure_pointer_highlighting(stackView_);
 
 	Theme theme = Theme::load();
 
@@ -1673,11 +1684,11 @@ void Debugger::followInStack(const Ptr &hexview) {
 // Desc:
 //------------------------------------------------------------------------------
 template <class Ptr>
-void Debugger::followInDump(const Ptr &hexview) {
+void Debugger::followInDump(const Ptr &hexview, bool new_tab) {
 
 	if (const Result<edb::address_t, QString> address = getFollowAddress(hexview)) {
-		followMemory(*address, [](edb::address_t address) {
-			return edb::v1::dump_data(address);
+		followMemory(*address, [new_tab](edb::address_t address) {
+			return edb::v1::dump_data(address, new_tab);
 		});
 	}
 }
@@ -1709,7 +1720,15 @@ void Debugger::mnuDumpFollowInCPU() {
 // Desc:
 //------------------------------------------------------------------------------
 void Debugger::mnuDumpFollowInDump() {
-	followInDump(qobject_cast<QHexView *>(tabWidget_->currentWidget()));
+	followInDump(qobject_cast<QHexView *>(tabWidget_->currentWidget()), false);
+}
+
+//------------------------------------------------------------------------------
+// Name: mnuDumpFollowInDumpNewTab
+// Desc:
+//------------------------------------------------------------------------------
+void Debugger::mnuDumpFollowInDumpNewTab() {
+	followInDump(qobject_cast<QHexView *>(tabWidget_->currentWidget()), true);
 }
 
 //------------------------------------------------------------------------------
@@ -1725,7 +1744,7 @@ void Debugger::mnuDumpFollowInStack() {
 // Desc:
 //------------------------------------------------------------------------------
 void Debugger::mnuStackFollowInDump() {
-	followInDump(stackView_);
+	followInDump(stackView_, false);
 }
 
 //------------------------------------------------------------------------------
@@ -1999,6 +2018,7 @@ void Debugger::mnuDumpContextMenu(const QPoint &pos) {
 	menu->addSeparator();
 	menu->addAction(dumpFollowInCPUAction_);
 	menu->addAction(dumpFollowInDumpAction_);
+	menu->addAction(dumpFollowInDumpTabAction_);
 	menu->addAction(dumpFollowInStackAction_);
 	menu->addAction(gotoAddressAction_);
 	menu->addSeparator();
@@ -3147,7 +3167,11 @@ void Debugger::setupDataViews() {
 	}
 
 	// Update stack word width
+	configure_pointer_highlighting(stackView_);
 	stackView_->setWordWidth(static_cast<int>(edb::v1::pointer_size()));
+	Q_FOREACH (const std::shared_ptr<DataViewInfo> &data_view, dataRegions_) {
+		configure_pointer_highlighting(data_view->view);
+	}
 }
 
 //------------------------------------------------------------------------------

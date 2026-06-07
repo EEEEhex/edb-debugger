@@ -180,6 +180,7 @@ private Q_SLOTS:
 	void mnuDumpDeleteTab();
 	void mnuDumpFollowInCPU();
 	void mnuDumpFollowInDump();
+	void mnuDumpFollowInDumpNewTab();
 	void mnuDumpFollowInStack();
 	void mnuDumpGotoAddress();
 	void mnuDumpModify();
@@ -274,7 +275,7 @@ private:
 	void followInCpu(const Ptr &hexview);
 
 	template <class Ptr>
-	void followInDump(const Ptr &hexview);
+	void followInDump(const Ptr &hexview, bool new_tab);
 
 	template <class Ptr>
 	void followInStack(const Ptr &hexview);
@@ -346,6 +347,7 @@ private:
 	QAction *gotoRIPAction_;
 	QAction *dumpFollowInCPUAction_;
 	QAction *dumpFollowInDumpAction_;
+	QAction *dumpFollowInDumpTabAction_;
 	QAction *dumpFollowInStackAction_;
 	QAction *dumpSaveToFileAction_;
 	QAction *registerFollowInDumpAction_;
