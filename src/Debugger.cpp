@@ -46,6 +46,7 @@
 #endif
 
 #include <QCloseEvent>
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QDesktopServices>
 #include <QDesktopWidget>
@@ -77,6 +78,7 @@
 #include <cstring>
 #include <memory>
 #include <random>
+#include <vector>
 
 #if defined(Q_OS_UNIX)
 #include <csignal>
@@ -106,6 +108,174 @@ void configure_pointer_highlighting(const std::shared_ptr<QHexView> &view) {
 		const std::shared_ptr<IRegion> region = edb::v1::memory_regions().findRegion(address);
 		return region && region->accessible();
 	});
+}
+
+bool is_accessible_address(edb::address_t address) {
+	const std::shared_ptr<IRegion> region = edb::v1::memory_regions().findRegion(address);
+	return region && region->accessible();
+}
+
+struct MemoryGotoCandidate {
+	QString label;
+	edb::address_t address;
+};
+
+QString address_menu_text(const QString &label, edb::address_t address) {
+	return QStringLiteral("%1: %2").arg(label, edb::v1::format_pointer(address));
+}
+
+QString operand_text(const edb::Operand &operand) {
+	return QString::fromStdString(edb::v1::formatter().toString(operand));
+}
+
+QString memory_expression_text(const edb::Operand &operand) {
+	QString text = operand_text(operand);
+	const int openBracket  = text.indexOf('[');
+	const int closeBracket = text.lastIndexOf(']');
+	if (openBracket != -1 && closeBracket > openBracket) {
+		text = text.mid(openBracket + 1, closeBracket - openBracket - 1);
+	}
+	return text;
+}
+
+bool is_memory_constant_expression(const edb::Operand &operand, const QString &expression_text) {
+	if (!operand || !is_expression(operand)) {
+		return false;
+	}
+
+#if defined(EDB_X86) || defined(EDB_X86_64)
+	if (operand->mem.base == X86_REG_INVALID && operand->mem.index == X86_REG_INVALID) {
+		return true;
+	}
+
+	// Formatter may display RIP-relative operands as absolute addresses, e.g. [0x55...].
+	return operand->mem.base == X86_REG_RIP &&
+		   operand->mem.index == X86_REG_INVALID &&
+		   expression_text.startsWith(QStringLiteral("0x"), Qt::CaseInsensitive);
+#elif defined(EDB_ARM32) || defined(EDB_ARM64)
+	return operand->mem.base == ARM_REG_INVALID &&
+		   operand->mem.index == ARM_REG_INVALID;
+#else
+	return false;
+#endif
+}
+
+Result<edb::address_t, QString> memory_operand_address(const edb::Instruction &inst, const edb::Operand &operand, const State &state) {
+#if defined(EDB_X86) || defined(EDB_X86_64)
+	if (operand && is_expression(operand) && operand->mem.base == X86_REG_RIP) {
+		edb::address_t address = inst.rva();
+		address += inst.byteSize();
+		address += operand->mem.disp;
+		address.normalize();
+		return address;
+	}
+#endif
+
+	return edb::v1::arch_processor().getEffectiveAddress(inst, operand, state);
+}
+
+void add_memory_goto_candidate(std::vector<MemoryGotoCandidate> &candidates, const QString &label, edb::address_t address, bool require_accessible = true) {
+	if (require_accessible && !is_accessible_address(address)) {
+		return;
+	}
+
+	const auto existing = std::find_if(candidates.begin(), candidates.end(), [&label, address](const MemoryGotoCandidate &candidate) {
+		return candidate.label == label && candidate.address == address;
+	});
+
+	if (existing == candidates.end()) {
+		candidates.push_back({label, address});
+	}
+}
+
+void add_register_memory_goto_candidate(std::vector<MemoryGotoCandidate> &candidates, const QString &name, const State &state) {
+	const Register reg = state[name];
+	if (reg && (reg.type() == Register::TYPE_GPR || reg.type() == Register::TYPE_IP)) {
+		add_memory_goto_candidate(candidates, name, reg.valueAsAddress());
+	}
+}
+
+void add_operand_register_memory_goto_candidates(std::vector<MemoryGotoCandidate> &candidates, const edb::Operand &operand, const State &state) {
+	if (!operand) {
+		return;
+	}
+
+	if (is_register(operand)) {
+		add_register_memory_goto_candidate(candidates, operand_text(operand), state);
+		return;
+	}
+
+	if (!is_expression(operand)) {
+		return;
+	}
+
+#if defined(EDB_X86) || defined(EDB_X86_64)
+	if (operand->mem.base != X86_REG_INVALID) {
+		add_register_memory_goto_candidate(candidates, QString::fromStdString(edb::v1::formatter().registerName(operand->mem.base)), state);
+	}
+	if (operand->mem.index != X86_REG_INVALID) {
+		add_register_memory_goto_candidate(candidates, QString::fromStdString(edb::v1::formatter().registerName(operand->mem.index)), state);
+	}
+#elif defined(EDB_ARM32) || defined(EDB_ARM64)
+	if (operand->mem.base != ARM_REG_INVALID) {
+		add_register_memory_goto_candidate(candidates, QString::fromStdString(edb::v1::formatter().registerName(operand->mem.base)), state);
+	}
+	if (operand->mem.index != ARM_REG_INVALID) {
+		add_register_memory_goto_candidate(candidates, QString::fromStdString(edb::v1::formatter().registerName(operand->mem.index)), state);
+	}
+#endif
+}
+
+std::vector<MemoryGotoCandidate> memory_goto_candidates(const edb::Instruction &inst, edb::address_t selected_address, const State &state) {
+	std::vector<MemoryGotoCandidate> candidates;
+	add_memory_goto_candidate(candidates, QCoreApplication::translate("Debugger", "Selected Address"), selected_address, false);
+
+	for (std::size_t i = 0; i < inst.operandCount(); ++i) {
+		const edb::Operand operand = inst[i];
+		if (!operand) {
+			continue;
+		}
+
+		add_operand_register_memory_goto_candidates(candidates, operand, state);
+
+		if (is_expression(operand)) {
+			const auto effectiveAddress = memory_operand_address(inst, operand, state);
+			if (effectiveAddress) {
+				const QString expressionText = memory_expression_text(operand);
+				add_memory_goto_candidate(candidates, expressionText, effectiveAddress.value());
+				if (is_memory_constant_expression(operand, expressionText)) {
+					add_memory_goto_candidate(candidates, QCoreApplication::translate("Debugger", "Constant"), effectiveAddress.value());
+				}
+			}
+
+#if defined(EDB_X86) || defined(EDB_X86_64) || defined(EDB_ARM32) || defined(EDB_ARM64)
+			if (operand->mem.disp != 0
+#if defined(EDB_X86) || defined(EDB_X86_64)
+				&& operand->mem.base != X86_REG_RIP
+#endif
+			) {
+				add_memory_goto_candidate(candidates, QCoreApplication::translate("Debugger", "Constant"), util::to_unsigned(operand->mem.disp));
+			}
+#endif
+		} else if (is_immediate(operand)) {
+			add_memory_goto_candidate(candidates, QCoreApplication::translate("Debugger", "Constant"), util::to_unsigned(operand->imm));
+		}
+	}
+
+	return candidates;
+}
+
+void add_memory_goto_menu(QMenu *menu, const edb::Instruction &inst, edb::address_t selected_address, const State &state) {
+	auto memoryMenu = new QMenu(QCoreApplication::translate("Debugger", "Go to in Memory Window"), menu);
+
+	for (const MemoryGotoCandidate &candidate : memory_goto_candidates(inst, selected_address, state)) {
+		QAction *const action = memoryMenu->addAction(address_menu_text(candidate.label, candidate.address));
+		QObject::connect(action, &QAction::triggered, action, [address = candidate.address]() {
+			edb::v1::dump_data(address);
+		});
+	}
+
+	menu->addMenu(memoryMenu);
 }
 
 template <class Addr>
@@ -1864,6 +2034,8 @@ void Debugger::customContextMenuRequested_triggered(const QPoint &pos) {
 		if (edb::v1::get_instruction_bytes(address, buffer, &size)) {
 			edb::Instruction inst(buffer, buffer + size, address);
 			if (inst) {
+				State state;
+				add_memory_goto_menu(&menu, inst, address, state);
 
 				if (is_call(inst) || is_jump(inst)) {
 					if (is_immediate(inst[0])) {

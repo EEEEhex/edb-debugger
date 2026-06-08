@@ -1851,6 +1851,23 @@
         <translation>&amp;设置标签...</translation>
     </message>
     <message>
+        <location filename="../../Debugger.cpp" line="269"/>
+        <source>Go to in Memory Window</source>
+        <translation>在内存窗口中转到</translation>
+    </message>
+    <message>
+        <location filename="../../Debugger.cpp" line="231"/>
+        <source>Selected Address</source>
+        <translation>选定的地址</translation>
+    </message>
+    <message>
+        <location filename="../../Debugger.cpp" line="247"/>
+        <location filename="../../Debugger.cpp" line="257"/>
+        <location filename="../../Debugger.cpp" line="261"/>
+        <source>Constant</source>
+        <translation>常数</translation>
+    </message>
+    <message>
         <location filename="../../Debugger.cpp" line="394"/>
         <source>:</source>
         <translation></translation>
