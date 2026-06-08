@@ -7070,6 +7070,157 @@ Do you really want to set a breakpoint here?</source>
     </message>
 </context>
 <context>
+    <name>StdStringScannerPlugin::DialogStdStringScanner</name>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="86"/>
+        <source>std::string Scanner</source>
+        <translation>std::string 扫描器</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="94"/>
+        <source>List any pointer whose target looks like a string</source>
+        <translation>列出所有目标内容像字符串的指针</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="103"/>
+        <source>Start address:</source>
+        <translation>起始地址：</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="104"/>
+        <source>Scan size:</source>
+        <translation>扫描大小：</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="105"/>
+        <source>Brute mode:</source>
+        <translation>暴力模式：</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="106"/>
+        <source>Minimum string length:</source>
+        <translation>最小字符串长度：</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="107"/>
+        <source>Maximum heap string length:</source>
+        <translation>最大堆字符串长度：</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="113"/>
+        <source>Location</source>
+        <translation>位置</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="114"/>
+        <source>Data</source>
+        <translation>数据</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="115"/>
+        <source>Size</source>
+        <translation>大小</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="116"/>
+        <source>Capacity</source>
+        <translation>容量</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="117"/>
+        <source>Storage</source>
+        <translation>存储</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="118"/>
+        <source>Content</source>
+        <translation>内容</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="135"/>
+        <source>Scan</source>
+        <translation>扫描</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="146"/>
+        <source>Invalid Start Address</source>
+        <translation>无效起始地址</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="146"/>
+        <source>The start address is not valid.</source>
+        <translation>起始地址无效。</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="154"/>
+        <source>Invalid Scan Size</source>
+        <translation>无效扫描大小</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="154"/>
+        <source>The scan size must be at least %1 bytes.</source>
+        <translation>扫描大小必须至少为 %1 字节。</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="294"/>
+        <source>SSO</source>
+        <translation>SSO</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="320"/>
+        <source>Heap</source>
+        <translation>堆</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="364"/>
+        <source>Pointer</source>
+        <translation>指针</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="196"/>
+        <source>Unsupported Target</source>
+        <translation>不支持的目标</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="196"/>
+        <source>This scanner currently supports 64-bit libstdc++ std::string objects only.</source>
+        <translation>此扫描器当前仅支持 64 位 libstdc++ std::string 对象。</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="203"/>
+        <source>Invalid Memory Range</source>
+        <translation>无效内存范围</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="203"/>
+        <source>The requested scan range is not fully readable.</source>
+        <translation>请求的扫描范围并非完全可读。</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="217"/>
+        <source>No Results</source>
+        <translation>没有结果</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/DialogStdStringScanner.cpp" line="217"/>
+        <source>No possible std::string objects were found.</source>
+        <translation>未找到可能的 std::string 对象。</translation>
+    </message>
+</context>
+<context>
+    <name>StdStringScannerPlugin::StdStringScanner</name>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/StdStringScanner.cpp" line="28"/>
+        <source>std::string Scanner</source>
+        <translation>std::string 扫描器</translation>
+    </message>
+    <message>
+        <location filename="../../../plugins/StdStringScanner/StdStringScanner.cpp" line="29"/>
+        <source>&amp;std::string Scanner</source>
+        <translation>std::string 扫描器(&amp;S)</translation>
+    </message>
+</context>
+<context>
     <name>edb::v2</name>
     <message>
         <location filename="../../edb.cpp" line="1512"/>
