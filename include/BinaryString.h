@@ -16,6 +16,7 @@ class BinaryStringWidget;
 
 class QString;
 class QByteArray;
+class QLineEdit;
 
 class EDB_EXPORT BinaryString : public QWidget {
 	Q_OBJECT
@@ -33,6 +34,7 @@ public:
 private Q_SLOTS:
 	void on_txtAscii_textEdited(const QString &text);
 	void on_txtHex_textEdited(const QString &text);
+	void on_txtUTF8_textEdited(const QString &text);
 	void on_txtUTF16_textEdited(const QString &text);
 	void on_keepSize_stateChanged(int state);
 
@@ -45,6 +47,7 @@ public:
 
 private:
 	void setEntriesMaxLength(int n);
+	void updateEntries(const QByteArray &data, QLineEdit *source);
 
 private:
 	::Ui::BinaryStringWidget *ui = nullptr;

@@ -1189,6 +1189,11 @@
     </message>
     <message>
         <location filename="../../BinaryString.ui" line="39"/>
+        <source>UTF-8</source>
+        <translation>UTF-8</translation>
+    </message>
+    <message>
+        <location filename="../../BinaryString.ui" line="58"/>
         <source>UTF-16</source>
         <translation></translation>
     </message>
